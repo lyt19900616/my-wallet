@@ -1,40 +1,37 @@
 import type { PlasmoCSConfig } from "plasmo"
 
 export const config: PlasmoCSConfig = {
-  // 覆盖你的测试DApp域名，例如本地开发环境或目标网站
-  matches: ["<all_urls>"], // 临时使用所有域名测试，后续可缩小范围
-  world: "MAIN" // 关键：运行在主世界以访问 chrome.runtime
+  matches: ["<all_urls>"], // 覆盖所有测试域名
+  world: "MAIN", // 强制主世界运行
+  all_frames: true // 确保在所有框架中生效
 }
 
-// 添加注入 bridge.js 的逻辑
 const injectBridgeScript = () => {
-  // 检查 chrome.runtime 是否可用
-  if (typeof chrome === "undefined" || !chrome.runtime) {
-    console.error("❌ chrome.runtime 不可用，无法注入 bridge.js")
-    return
+  const runtime = chrome?.runtime
+  
+  if (!runtime) {
+    console.error("❌ 无法访问 runtime API，可能是环境隔离或文件名错误导致");
+    return;
   }
 
   try {
-    const script = document.createElement("script")
-    // 生成 bridge.js 的资源URL（需确保 bridge.js 在 public 目录）
-    script.src = chrome.runtime.getURL("bridge.js")
-    // 加载成功后移除脚本标签（可选）
+    const script = document.createElement("script");
+    script.src = runtime.getURL("bridge.js"); // 使用正确的 runtime 引用
     script.onload = () => {
-      console.log("✅ bridge.js 注入成功")
-      script.remove()
-    }
-    // 加载失败处理
+      console.log("✅ bridge.js 注入成功");
+      script.remove();
+    };
     script.onerror = () => {
-      console.error("❌ bridge.js 加载失败，请检查路径和 web_accessible_resources 配置")
-    }
-    document.head.appendChild(script)
+      console.error("❌ bridge.js 加载失败，检查 public 目录是否存在该文件");
+    };
+    document.head.appendChild(script);
   } catch (err) {
-    console.error("❌ 注入 bridge.js 时出错：", err)
+    console.error("❌ 注入失败：", err);
   }
 }
 
-// 页面加载后执行注入
-window.addEventListener("load", () => {
-  console.log("📌 内容脚本已加载，准备注入 bridge.js...")
-  injectBridgeScript()
-})
+// 页面加载时执行（改用 DOMContentLoaded 提前注入）
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("📌 内容脚本已加载，准备注入 bridge.js...");
+  injectBridgeScript();
+});
