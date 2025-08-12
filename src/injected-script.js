@@ -24,4 +24,4 @@ window.myWallet = {
   }
 }
 
-window.dispatchEvent(new Event('wallet-loaded'))
+window.dispatchEvent(new Event('myWallet:initialized'))
