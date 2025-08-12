@@ -1,7 +1,7 @@
 import type { PlasmoCSConfig } from 'plasmo';
 
 export const config: PlasmoCSConfig = {
-  matches: ['<all_urls>']
+  matches: ["https://*/*", "http://*/*"]
 }
 console.log('palsmo content script loaded');
 
