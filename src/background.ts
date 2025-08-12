@@ -1,21 +1,23 @@
-console.log('background.ts loaded');
+// 存储账户信息（实际项目中应加密存储）
+const mockAccounts = ["0x1234567890abcdef..."]
 
-// 监听来自 content script 的消息
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  switch (request.type) {
-    case 'REQUEST_ACCOUNTS':
-      console.log("DApp请求授权");
-      // 进行授权操作
-      sendResponse({ message: '授权成功' });
-      break;
+// 监听来自内容脚本的消息
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("background received message:", message)
 
-    case 'SING_TRANSACTION': 
-      // 进行签名操作
-      const signedTx = `signed_${JSON.stringify(request.data)}`
-      sendResponse({ signedTx });
+  switch (message.type) {
+    case "WALLET_REQUEST_ACCOUNTS":
+      // 模拟授权逻辑
+      sendResponse({ accounts: mockAccounts })
+      break
+    case "WALLET_SIGN_MESSAGE":
+      // 模拟签名逻辑
+      const signed = `signed:${message.data}`
+      sendResponse({ signedMessage: signed })
+      break
     default:
-      sendResponse({ message: '未知消息类型' });
-      break;
+      sendResponse({ error: "Unknown command" })
   }
-  return true; // 返回 true 表示异步处理
 })
+
+console.log("background script loaded, ready to handle messages")
