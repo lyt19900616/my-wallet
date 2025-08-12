@@ -1,3 +1,10 @@
+/**
+ * 作用：定义扩展的“设置页面”（通过扩展管理页访问）。
+
+  用途：允许用户配置选项（如主题、快捷键、自定义参数）。
+
+  入口路径：chrome://extensions/?options=<扩展id>
+ */
 import { useState } from "react"
 
 function IndexOptions() {
