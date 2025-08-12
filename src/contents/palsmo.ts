@@ -2,8 +2,7 @@ import type { PlasmoCSConfig } from "plasmo"
 
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"], // 覆盖所有测试域名
-  world: "MAIN", // 强制主世界运行
-  all_frames: true // 确保在所有框架中生效
+  world: "MAIN" // 强制主世界运行
 }
 
 const injectBridgeScript = () => {
