@@ -2,8 +2,6 @@ import "./types"
 
 export default function injectMyWallet() {
     console.log("🔧 正在通过 background script 注入 myWallet 对象...")
-    console.log(window.myWallet);
-    console.log(window.myWalletInjected)
     
     // 检查是否已经注入过
     if (window.myWallet || window.myWalletInjected) {

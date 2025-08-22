@@ -2,8 +2,32 @@ import injectMyWallet from "./injected-helper"
 console.log('background');
 
 
+// 给chrom 注入wallet的时机 
+// 1.标签页加载完成时
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  console.log("chrome.tabs.onUpdated", tabId, changeInfo, tab);
+  
+  // 只在页面完成加载时注入
+  if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith('chrome://')) {
+    console.log("🔄 页面加载完成，开始注入 myWallet:", tab.url)
+    inject(tabId)
+  }
+})
+
+// 2.在标签页激活时也注入（备用机制）
+chrome.tabs.onActivated.addListener((e) => {
+  console.log("chrome.tabs.onActivated", e);
+  chrome.tabs.get(e.tabId, (tab) => {
+    if (tab.url && !tab.url.startsWith('chrome://')) {
+      console.log("🔄 标签页激活，注入 myWallet:", tab.url)
+      inject(e.tabId)
+    }
+  })
+})
+
 const inject = async (tabId: number) => {
   try {
+    // 执行注入
     await chrome.scripting.executeScript(
       {
         target: {
@@ -79,24 +103,3 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 })
 
-// 在页面更新时注入
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  console.log("chrome.tabs.onUpdated", tabId, changeInfo, tab);
-  
-  // 只在页面完成加载时注入
-  if (changeInfo.status === 'complete' && tab.url && !tab.url.startsWith('chrome://')) {
-    console.log("🔄 页面加载完成，开始注入 myWallet:", tab.url)
-    inject(tabId)
-  }
-})
-
-// 在标签页激活时也注入（备用机制）
-chrome.tabs.onActivated.addListener((e) => {
-  console.log("chrome.tabs.onActivated", e);
-  chrome.tabs.get(e.tabId, (tab) => {
-    if (tab.url && !tab.url.startsWith('chrome://')) {
-      console.log("🔄 标签页激活，注入 myWallet:", tab.url)
-      inject(e.tabId)
-    }
-  })
-})
