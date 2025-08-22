@@ -1,5 +1,5 @@
 import type { PlasmoCSConfig } from "plasmo"
-console.log('palsmo');
+console.log('plasmo');
 
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"], // 覆盖所有测试域名
