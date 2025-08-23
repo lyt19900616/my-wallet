@@ -30,10 +30,16 @@ interface WalletStore extends WalletState {
   // Utility
   getProvider: () => ethers.JsonRpcProvider | null;
   isValidPassword: (password: string) => boolean;
+
+  // 拓展
+  connect: () => Promise<WalletAccount>;
+  signMessage: (message: string) => Promise<string>;
+  disconnect: () => void;
 }
 
 const initialState: WalletState = {
   isLocked: false,
+  isConnected: false,
   accounts: [],
   currentAccount: null,
   mnemonic: null,
@@ -257,10 +263,55 @@ export const useWalletStore = create<WalletStore>()(
         const state = get();
         const hashedPassword = CryptoJS.SHA256(password).toString();
         return state.password === hashedPassword;
+      },
+      // 拓展
+      isConnected: false,
+      connect: async () => {
+        const { state } = JSON.parse(localStorage.getItem("wallet-store"))
+        console.log('钱包信息:', state);
+        
+        const account = state.currentAccount as WalletAccount
+        if (!account ) {
+          throw new Error('请先在插件中导入账户')
+        }
+        set({
+          currentAccount: account,
+          isConnected: true
+        })
+        return account
+      },
+      signMessage: async (message) => {
+        const { state } = JSON.parse(localStorage.getItem("wallet-store"))
+        console.log('钱包信息:', state);
+        const account = state.currentAccount
+        if (!account) {
+          throw new Error('未连接钱包')
+        }
+        const bytes = CryptoJS.AES.decrypt(account.privateKey, state.password);
+        const privateKey = bytes.toString(CryptoJS.enc.Utf8)
+
+        const wallet = new ethers.Wallet(privateKey)
+        return wallet.signMessage(message)
+      },
+      disconnect: () => {
+        set({ currentAccount: null, isConnected: false})
       }
     }),
     {
       name: 'wallet-store',
+      // 自定义存储：使用 chrome.storage.local
+      // storage: {
+      //   getItem: async (name) => {
+      //     const result = await chrome.storage.local.get(name);
+      //     return result[name] || null; // 获取存储的状态
+      //   },
+      //   setItem: async (name, value) => {
+      //     await chrome.storage.local.set({ [name]: value }); // 存储状态
+      //   },
+      //   removeItem: async (name) => {
+      //     await chrome.storage.local.remove(name); // 删除状态（可选）
+      //   }
+      // },
       partialize: (state) => ({
         accounts: state.accounts,
         mnemonic: state.mnemonic,
@@ -268,7 +319,8 @@ export const useWalletStore = create<WalletStore>()(
         networks: state.networks,
         tokens: state.tokens,
         currentNetwork: state.currentNetwork,
-        currentAccount: state.currentAccount
+        currentAccount: state.currentAccount,
+        isConnected: state.isConnected
       })
     }
   )

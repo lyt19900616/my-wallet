@@ -1,4 +1,7 @@
-import injectMyWallet from "./injected-helper"
+import injectMyWallet from './injected-helper';
+import { useWalletStore } from '../stores/walletStore'
+import * as constant from './constant'
+
 console.log('background');
 
 
@@ -43,63 +46,73 @@ const inject = async (tabId: number) => {
   }
 }
 
-// 监听来自 content script 的消息
-const handleContentScriptMessage = async (tabId: number, message: any, sender: any) => {
-  console.log("handleContentScriptMessage", tabId, message, sender);
+// 监听来自 injected-helper 的消息
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log("监听来自 injected-helper 的消息");
+  console.log('message:', message);
+  console.log('sender:', sender);
+  console.log('sendResponse:', sendResponse);
   
-  if (message.type === 'WALLET_CONNECT_REQUEST' && message.source === 'contentScript') {
-    console.log("📨 Background script 收到来自 content script 的连接请求")
-    
-    try {
-      // 获取发送方的信息
-      const origin = message.origin || 'unknown'
-      
-      // 保存待处理的连接请求
-      await chrome.storage.local.set({
-        pendingConnectRequest: {
-          tabId: tabId,
-          origin: origin,
-          timestamp: Date.now()
+  const walletStore = useWalletStore.getState()
+
+  // 处理连接请求
+  if (message.type === constant.WALLET_CONNECT) {
+    if (walletStore.isConnected && walletStore.currentAccount) {
+      sendResponse({
+        success: true,
+        data: {
+          address: walletStore.currentAccount.address,
+          chainId: walletStore.currentNetwork.chainId
         }
       })
-      
-      console.log("💾 已保存连接请求到存储")
-      
-      // 尝试打开扩展弹窗
-      try {
-        await chrome.action.openPopup()
-        console.log("🔔 已打开扩展弹窗")
-      } catch (popupError) {
-        console.warn("⚠️ 无法自动打开弹窗，用户需要手动点击扩展图标")
-        
-        // 设置扩展图标徽章提醒用户
-        await chrome.action.setBadgeText({
-          text: "1",
-          tabId: tabId
+    } else {
+      walletStore.connect().then((account) => {
+        sendResponse({
+          success: true,
+          data: {
+            address: account.address,
+            chainId: walletStore.currentNetwork.chainId
+          }
         })
-        await chrome.action.setBadgeBackgroundColor({
-          color: "#FF0000"
-        })
-      }
-      
-    } catch (error) {
-      console.error("❌ 处理连接请求失败:", error)
-      
-      // 向 content script 发送失败响应
-      chrome.tabs.sendMessage(tabId, {
-        type: 'WALLET_CONNECT_RESPONSE',
-        success: false,
-        error: "扩展内部错误"
+      }).catch((err) => {
+        console.log('connect方法出错了', err);
+        sendResponse({ success: false, error: err.message})
       })
     }
   }
-}
 
-// 监听来自content script的消息
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log("监听来自 chrome.runtime.onMessage content script 的消息", message, sender, sendResponse);
-  if (sender.tab && sender.tab.id) {
-    handleContentScriptMessage(sender.tab.id, message, sender)
+  // 获取账户请求
+  if (message.type === constant.WALLET_GET_ACCOUNT) {
+    sendResponse({
+      data: walletStore.currentAccount
+      ? {
+        address: walletStore.currentAccount.address,
+        balance: 0,
+        chainId: walletStore.currentNetwork.chainId
+      }
+      : null
+    })
+    return true
+  }
+
+  // 签名请求
+  if (message.type === constant.WALLET_SIGN_MESSAGE) {
+    const { message: rawMessage } = message.data
+    if (!walletStore.currentAccount) {
+      sendResponse({ success: false, error: '未连接钱包'})
+      return true
+    }
+    const signed = walletStore.signMessage(rawMessage)
+    sendResponse({
+      success: true,
+      data: { signedMessage: signed}
+    })
+    return true
+  }
+  // 断开连接
+  if (message.type === constant.WALLET_DISCONNECT) {
+    walletStore.disconnect()
+    sendResponse({ success: true })
+    return true
   }
 })
-

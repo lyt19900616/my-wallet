@@ -7,6 +7,7 @@ export interface WalletAccount {
 
 export interface WalletState {
   isLocked: boolean;
+  isConnected: boolean;
   accounts: WalletAccount[];
   currentAccount: WalletAccount | null;
   mnemonic: string | null;
