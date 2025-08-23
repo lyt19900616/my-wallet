@@ -4,12 +4,5 @@
     "name": "My Wallet",
     "version": "1.0.0",
     "host_permissions": ["<all_urls>"],
-    "permissions": ["tabs", "scripting"],
-    "content_scripts": [
-      {
-        "matches": ["<all_urls>"],
-        "js": ["src/contents/message-bridge.ts"],
-        "world": "ISOLATED"
-      }
-    ]
+    "permissions": ["tabs", "scripting"]
   }
