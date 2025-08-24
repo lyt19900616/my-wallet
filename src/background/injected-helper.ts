@@ -1,5 +1,7 @@
 import * as constant from './constant'
 export default function injectMyWallet() {
+  console.log("injected-helper");
+  
   if (window.myWallet || window.myWalletInjected) {
     return
   }
@@ -9,6 +11,8 @@ export default function injectMyWallet() {
   const myWallet = {
     // 连接钱包
     connect: async () => {
+      console.log('connect');
+      
       return new Promise((resolve, reject) => {
         const requestId = generateRequestId()
         // 向桥接发送连接请求
@@ -81,6 +85,7 @@ export default function injectMyWallet() {
     },
     // 签名信息
     signMessage: async (message: string) => {
+      console.log('signMessage:', message);
       return new Promise((resolve, reject) => {
         const requestId = generateRequestId()
         const messageData = {
@@ -89,9 +94,12 @@ export default function injectMyWallet() {
           requestId,
           from : 'injected-helper'
         }
+        console.log(messageData);
         window.postMessage(messageData, window.location.origin)
-
+        console.log('22');
         const handleResponse = (event: MessageEvent) => {
+          console.log(event);
+          
           if (!_isValidResponse(event, requestId)) return
           window.removeEventListener('message', handleResponse)
 

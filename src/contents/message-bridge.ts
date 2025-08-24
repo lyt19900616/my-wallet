@@ -1,8 +1,8 @@
 import type { PlasmoCSConfig } from "plasmo";
 
 export const config: PlasmoCSConfig = {
-  matches: ["<all_urls>"],
-  world: "ISOLATED"
+  matches: ["<all_urls>"]
+  // world: "ISOLATED"
 }
 console.log("message-bridge.ts 已经加载");
 
