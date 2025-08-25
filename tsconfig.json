@@ -1,4 +1,5 @@
 {
+  "extends": "plasmo/templates/tsconfig.base",
   "exclude": [
     "node_modules"
   ],
@@ -9,6 +10,8 @@
     "global.d.ts"
   ],
   "compilerOptions": {
+    "jsx": "react",
+    "jsx": "react",
     "paths": {
       "@/*": [
         "./src/*"

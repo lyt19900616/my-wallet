@@ -1,6 +1,6 @@
 import { type Network, type Token, type WalletAccount, type WalletState, DEFAULT_NETWORKS } from '@/types/wallet';
 import * as bip39 from 'bip39';
-import  { AES, SHA256, enc} from 'crypto-js';
+import { AES, SHA256, enc } from 'crypto-js';
 import { ethers } from 'ethers';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -266,19 +266,42 @@ export const useWalletStore = create<WalletStore>()(
       },
       // 拓展
       isConnected: false,
-      connect: async () => {
-        const { state } = JSON.parse(localStorage.getItem("wallet-store"))
-        console.log('钱包信息:', state);
+      // connect: async () => {
+      //   const { state } = JSON.parse(localStorage.getItem("wallet-store"))
+      //   console.log('钱包信息:', state);
         
-        const account = state.currentAccount as WalletAccount
-        if (!account ) {
-          throw new Error('请先在插件中导入账户')
+      //   const account = state.currentAccount as WalletAccount
+      //   if (!account ) {
+      //     throw new Error('请先在插件中导入账户')
+      //   }
+      //   set({
+      //     currentAccount: account,
+      //     isConnected: true
+      //   })
+      //   return account
+      // },
+      connect: async (): Promise<WalletAccount> => {
+        const state = await new Promise<WalletState | null>((resolve) => {
+          chrome.storage.local.get('wallet-store', (result) => {
+            console.log('钱包信息:', result['wallet-store']);
+            resolve(result['wallet-store']?.state || null);
+          });
+        });
+
+        if (!state || !state.currentAccount) {
+
+          throw new Error('请先在插件中导入账户');
         }
+        console.log(state);
+        console.log(state.currentAccount );
+        
+        const account = state.currentAccount as WalletAccount;
         set({
           currentAccount: account,
           isConnected: true
-        })
-        return account
+        });
+
+        return account;
       },
       signMessage: async (message) => {
         const { state } = JSON.parse(localStorage.getItem("wallet-store"))
@@ -300,18 +323,18 @@ export const useWalletStore = create<WalletStore>()(
     {
       name: 'wallet-store',
       // 自定义存储：使用 chrome.storage.local
-      // storage: {
-      //   getItem: async (name) => {
-      //     const result = await chrome.storage.local.get(name);
-      //     return result[name] || null; // 获取存储的状态
-      //   },
-      //   setItem: async (name, value) => {
-      //     await chrome.storage.local.set({ [name]: value }); // 存储状态
-      //   },
-      //   removeItem: async (name) => {
-      //     await chrome.storage.local.remove(name); // 删除状态（可选）
-      //   }
-      // },
+      storage: {
+        getItem: async (name: string) => {
+            const result = await chrome.storage.local.get(name);
+            return result[name] || null;
+          },
+          setItem: async (name: string, value: any) => {
+            await chrome.storage.local.set({ [name]: value });
+          },
+          removeItem: async (name: string) => {
+            await chrome.storage.local.remove(name);
+          }
+      },
       partialize: (state) => ({
         accounts: state.accounts,
         mnemonic: state.mnemonic,

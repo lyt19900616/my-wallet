@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useWalletStore } from '@/stores/walletStore';
 import { Check, Copy, Eye, EyeOff, Import, Key, Wallet } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 
 export const WalletSetup = () => {
   const [password, setPassword] = useState('');

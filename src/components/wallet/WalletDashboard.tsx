@@ -16,7 +16,7 @@ import {
   Send,
   Wallet
 } from 'lucide-react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { AccountManager } from './AccountManager';
 import { NetworkSelector } from './NetworkSelector';
 import { SendTransaction } from './SendTransaction';

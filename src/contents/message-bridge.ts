@@ -19,8 +19,8 @@ window.addEventListener("message", (event) => {
     event.source !== window ||
     !event.data ||
     event.data.from !== "injected-helper" ||
-    event.data.type ||
-    event.data.requestId
+    !event.data.type ||
+    !event.data.requestId
   ) {
     return
   }
@@ -49,7 +49,7 @@ window.addEventListener("message", (event) => {
         requestId: event.data.requestId,
         success: true,
         data: response.data
-      }, window.location.origin)
+      }, "*")
     }
   )
 })
