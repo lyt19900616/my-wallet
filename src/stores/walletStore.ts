@@ -1,6 +1,6 @@
 import { type Network, type Token, type WalletAccount, type WalletState, DEFAULT_NETWORKS } from '@/types/wallet';
 import * as bip39 from 'bip39';
-import CryptoJS from 'crypto-js';
+import  { AES, SHA256, enc} from 'crypto-js';
 import { ethers } from 'ethers';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
@@ -79,15 +79,15 @@ export const useWalletStore = create<WalletStore>()(
         };
 
         // Encrypt sensitive data
-        const encryptedMnemonic = CryptoJS.AES.encrypt(mnemonic, password).toString();
-        const encryptedPrivateKey = CryptoJS.AES.encrypt(wallet.privateKey, password).toString();
+        const encryptedMnemonic = AES.encrypt(mnemonic, password).toString();
+        const encryptedPrivateKey = AES.encrypt(wallet.privateKey, password).toString();
 
         set({
           isLocked: false,
           accounts: [{ ...account, privateKey: encryptedPrivateKey }],
           currentAccount: account,
           mnemonic: encryptedMnemonic,
-          password: CryptoJS.SHA256(password).toString()
+          password: SHA256(password).toString()
         });
 
         return { mnemonic, account };
@@ -110,15 +110,15 @@ export const useWalletStore = create<WalletStore>()(
           index: 0
         };
 
-        const encryptedMnemonic = CryptoJS.AES.encrypt(mnemonic, password).toString();
-        const encryptedPrivateKey = CryptoJS.AES.encrypt(wallet.privateKey, password).toString();
+        const encryptedMnemonic = AES.encrypt(mnemonic, password).toString();
+        const encryptedPrivateKey = AES.encrypt(wallet.privateKey, password).toString();
 
         set({
           isLocked: false,
           accounts: [{ ...account, privateKey: encryptedPrivateKey }],
           currentAccount: account,
           mnemonic: encryptedMnemonic,
-          password: CryptoJS.SHA256(password).toString()
+          password: SHA256(password).toString()
         });
 
         return account;
@@ -136,12 +136,12 @@ export const useWalletStore = create<WalletStore>()(
             index: existingAccounts.length
           };
 
-          const encryptedPrivateKey = CryptoJS.AES.encrypt(wallet.privateKey, password).toString();
+          const encryptedPrivateKey = AES.encrypt(wallet.privateKey, password).toString();
 
           set(state => ({
             accounts: [...state.accounts, { ...account, privateKey: encryptedPrivateKey }],
             currentAccount: account,
-            password: state.password || CryptoJS.SHA256(password).toString()
+            password: state.password || SHA256(password).toString()
           }));
 
           return account;
@@ -152,7 +152,7 @@ export const useWalletStore = create<WalletStore>()(
 
       unlockWallet: (password: string) => {
         const state = get();
-        const hashedPassword = CryptoJS.SHA256(password).toString();
+        const hashedPassword = SHA256(password).toString();
         
         if (state.password === hashedPassword) {
           set({ isLocked: false });
@@ -172,7 +172,7 @@ export const useWalletStore = create<WalletStore>()(
         }
 
         // Decrypt mnemonic to create new account
-        const decryptedMnemonic = CryptoJS.AES.decrypt(state.mnemonic, state.password).toString(CryptoJS.enc.Utf8);
+        const decryptedMnemonic = AES.decrypt(state.mnemonic, state.password).toString(enc.Utf8);
         const seedBuffer = bip39.mnemonicToSeedSync(decryptedMnemonic);
         const seed = new Uint8Array(seedBuffer);
         const hdNode = ethers.HDNodeWallet.fromSeed(seed);
@@ -186,7 +186,7 @@ export const useWalletStore = create<WalletStore>()(
           index: accountIndex
         };
 
-        const encryptedPrivateKey = CryptoJS.AES.encrypt(wallet.privateKey, state.password).toString();
+        const encryptedPrivateKey = AES.encrypt(wallet.privateKey, state.password).toString();
 
         set(state => ({
           accounts: [...state.accounts, { ...account, privateKey: encryptedPrivateKey }],
@@ -261,7 +261,7 @@ export const useWalletStore = create<WalletStore>()(
 
       isValidPassword: (password: string) => {
         const state = get();
-        const hashedPassword = CryptoJS.SHA256(password).toString();
+        const hashedPassword = SHA256(password).toString();
         return state.password === hashedPassword;
       },
       // 拓展
@@ -287,8 +287,8 @@ export const useWalletStore = create<WalletStore>()(
         if (!account) {
           throw new Error('未连接钱包')
         }
-        const bytes = CryptoJS.AES.decrypt(account.privateKey, state.password);
-        const privateKey = bytes.toString(CryptoJS.enc.Utf8)
+        const bytes = AES.decrypt(account.privateKey, state.password);
+        const privateKey = bytes.toString(enc.Utf8)
 
         const wallet = new ethers.Wallet(privateKey)
         return wallet.signMessage(message)

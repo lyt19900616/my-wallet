@@ -1,5 +1,5 @@
 import { useWalletStore } from '../stores/walletStore';
-import * as constant from './constant';
+import * as constant from './type_constant';
 import injectMyWallet from './injected-helper';
 
 console.log('background 脚本启动了');

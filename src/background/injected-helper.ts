@@ -1,4 +1,5 @@
-import * as constant from './constant'
+
+ 
 export default function injectMyWallet() {
   console.log("injected-helper");
   
@@ -6,6 +7,10 @@ export default function injectMyWallet() {
     return
   }
 
+  const WALLET_CONNECT = 'WALLET_CONNECT'
+  const WALLET_GET_ACCOUNT = 'WALLET_GET_ACCOUNT'
+  const WALLET_SIGN_MESSAGE = 'WALLET_SIGN_MESSAGE'
+  const WALLET_DISCONNECT = 'WALLET_DISCONNECT'
   // 请求id
   const generateRequestId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7)
   const myWallet = {
@@ -14,18 +19,33 @@ export default function injectMyWallet() {
       console.log('connect');
       
       return new Promise((resolve, reject) => {
+        console.log('发送信息到 message-bridge');
+        
         const requestId = generateRequestId()
+        console.log('requestId :', requestId);
+        console.log("aaaaaa");
+        
+        console.log(WALLET_CONNECT);
+        
+        
+        
         // 向桥接发送连接请求
         const message = {
-          type: constant.WALLET_CONNECT,
+          type: WALLET_CONNECT,
           requestId,
           from : 'injected-helper'
         }
         // window.postMessage(message, '*')
+        console.log(message);
+        console.log(window.location.origin);
+        
+        
         window.postMessage(message, window.location.origin)
 
         // 监听连接结果
         const handleResponse = (event: MessageEvent) => {
+          console.log("handleResponse:", event);
+          
           // if (
           //   event.source !== window || 
           //   !event.data || 
@@ -57,7 +77,7 @@ export default function injectMyWallet() {
       return new Promise((resolve, reject) => {
         const requestId = generateRequestId()
         const message = {
-          type: constant.WALLET_GET_ACCOUNT,
+          type: WALLET_GET_ACCOUNT,
           requestId,
           from : 'injected-helper'
         }
@@ -89,7 +109,7 @@ export default function injectMyWallet() {
       return new Promise((resolve, reject) => {
         const requestId = generateRequestId()
         const messageData = {
-          type: constant.WALLET_SIGN_MESSAGE,
+          type: WALLET_SIGN_MESSAGE,
           data: { message },
           requestId,
           from : 'injected-helper'
@@ -121,7 +141,7 @@ export default function injectMyWallet() {
       return new Promise((resolve, reject) => {
         const requestId = generateRequestId()
         const message = {
-          type: constant.WALLET_DISCONNECT,
+          type: WALLET_DISCONNECT,
           requestId,
           from : 'injected-helper'
         }
@@ -136,17 +156,16 @@ export default function injectMyWallet() {
       })
     }
   }
+  function _isValidResponse(event: MessageEvent, requestId: string) {
+    return event.source === window &&
+            !event.data &&
+            event.data.from === 'injected-helper' &&
+            event.data.requestId === requestId
+  }
   window.myWallet = myWallet
   window.myWalletInjected = true
   console.log("myWallet 已经注入到页面"); 
 }  
-
-function _isValidResponse(event: MessageEvent, requestId: string) {
-  return event.source === window &&
-          !event.data &&
-          event.data.from === 'injected-helper' &&
-          event.data.requestId === requestId
-}
 
 // export default function injectMyWallet() {
 //   if (window.myWallet || window.myWalletInjected) {
